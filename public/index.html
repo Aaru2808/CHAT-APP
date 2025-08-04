@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chat App</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      }
+
+      body {
+        background-color: #f4f4f8;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 40px 10px;
+      }
+
+      h1 {
+        margin-bottom: 20px;
+        color: #333;
+      }
+
+      #messages {
+        width: 100%;
+        max-width: 600px;
+        height: 400px;
+        overflow-y: auto;
+        background-color: white;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      }
+
+      .message {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 10px;
+        max-width: 80%;
+      }
+
+      .own {
+        align-self: flex-end;
+        background-color: #d1e7dd;
+        color: #000;
+        border-radius: 12px 12px 0 12px;
+        padding: 8px 12px;
+      }
+
+      .other {
+        align-self: flex-start;
+        background-color: #e0f7fa;
+        color: #000;
+        border-radius: 12px 12px 12px 0;
+        padding: 8px 12px;
+      }
+
+      .username {
+        font-weight: bold;
+        font-size: 0.85em;
+        margin-bottom: 2px;
+      }
+
+      .input-container {
+        width: 100%;
+        max-width: 600px;
+        display: flex;
+        gap: 10px;
+      }
+
+      input[type="text"] {
+        flex: 1;
+        padding: 10px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        font-size: 16px;
+        outline: none;
+      }
+
+      #sendBtn {
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background-color 0.2s ease;
+      }
+
+      #sendBtn:hover {
+        background-color: #0056b3;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Live Chat</h1>
+
+    <div id="messages"></div>
+
+    <div class="input-container">
+      <input type="text" id="message" placeholder="Enter your message..." />
+      <button id="sendBtn">Send</button>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      const socket = io();
+      const sendBtn = document.getElementById("sendBtn");
+      const messageInput = document.getElementById("message");
+      const allMessages = document.getElementById("messages");
+
+      let username = prompt("Enter your username:");
+      while (!username || username.trim() === "") {
+        username = prompt("Username is required. Please enter your username:");
+      }
+
+      socket.on("message", (data) => {
+        const { user, text } = data;
+
+        const msgDiv = document.createElement("div");
+        msgDiv.classList.add("message");
+        msgDiv.classList.add(user === username ? "own" : "other");
+
+        const userLabel = document.createElement("div");
+        userLabel.classList.add("username");
+        userLabel.innerText = user;
+
+        const msgContent = document.createElement("div");
+        msgContent.innerText = text;
+
+        msgDiv.appendChild(userLabel);
+        msgDiv.appendChild(msgContent);
+
+        allMessages.appendChild(msgDiv);
+        allMessages.scrollTop = allMessages.scrollHeight;
+      });
+
+      sendBtn.addEventListener("click", () => {
+        const message = messageInput.value.trim();
+        if (message !== "") {
+          socket.emit("user-message", {
+            user: username,
+            text: message,
+          });
+          messageInput.value = "";
+        }
+      });
+
+      messageInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") {
+          sendBtn.click();
+        }
+      });
+    </script>
+  </body>
+</html>
